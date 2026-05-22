@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>El Primer Surfista Boliviano</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --rojo: #c0392b;
+      --rojo-oscuro: #7b1a12;
+      --negro: #0a0a0a;
+      --gris-oscuro: #141414;
+      --gris-medio: #1e1e1e;
+      --gris-claro: #2a2a2a;
+      --blanco: #e8e8e8;
+      --blanco-sucio: #c0b8a8;
+      --acento: #c0392b;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--negro);
+      color: var(--blanco);
+      font-family: 'Oswald', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.5;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 4rem;
+      background: rgba(10,10,10,0.98);
+      border-bottom: 1px solid rgba(192,57,43,0.15);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      letter-spacing: 0.15em;
+      color: var(--rojo);
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--blanco-sucio);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--rojo); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      background: var(--negro);
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 60%, rgba(192,57,43,0.12) 0%, transparent 70%),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(255,255,255,0.012) 2px,
+          rgba(255,255,255,0.012) 4px
+        );
+    }
+
+    .hero-content {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      padding: 2rem;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.5em;
+      color: var(--rojo);
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3.5rem, 12vw, 10rem);
+      line-height: 0.9;
+      letter-spacing: 0.03em;
+      color: var(--blanco);
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.4s forwards;
+    }
+
+    .hero-title span { color: var(--rojo); }
+
+    .hero-subtitle {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.3em;
+      font-weight: 300;
+      color: var(--blanco-sucio);
+      margin-bottom: 3rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s forwards;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.8s forwards;
+    }
+
+    .btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.9rem 2rem;
+      border: 1px solid;
+      transition: all 0.2s;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: var(--rojo);
+      color: var(--blanco);
+      border-color: var(--rojo);
+    }
+
+    .btn-primary:hover {
+      background: transparent;
+      color: var(--rojo);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--blanco-sucio);
+      border-color: rgba(192,184,168,0.3);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--rojo);
+      color: var(--rojo);
+    }
+
+    /* ── SECTIONS ── */
+    section { padding: 7rem 4rem; }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.4em;
+      color: var(--rojo);
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      letter-spacing: 0.05em;
+      line-height: 1;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── ABOUT ── */
+    #about {
+      background: var(--gris-oscuro);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: center;
+    }
+
+    .about-text p {
+      font-size: 1rem;
+      line-height: 1.9;
+      color: var(--blanco-sucio);
+      margin-bottom: 1.2rem;
+    }
+
+    .about-image {
+      position: relative;
+    }
+
+    .band-placeholder {
+      width: 100%;
+      aspect-ratio: 4/5;
+      background: var(--gris-claro);
+      border: 1px solid rgba(192,57,43,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .band-placeholder::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(192,57,43,0.04) 10px,
+        rgba(192,57,43,0.04) 11px
+      );
+    }
+
+    .band-placeholder-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: rgba(192,184,168,0.4);
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      line-height: 2;
+    }
+
+    /* ── INTEGRANTES ── */
+    #integrantes {
+      background: var(--negro);
+    }
+
+    .members-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2px;
+      margin-top: 3rem;
+    }
+
+    .member-card {
+      background: var(--gris-medio);
+      padding: 2.5rem 2rem;
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: border-color 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .member-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--rojo);
+      transform: scaleX(0);
+      transition: transform 0.3s;
+      transform-origin: left;
+    }
+
+    .member-card:hover::before { transform: scaleX(1); }
+    .member-card:hover { border-color: rgba(192,57,43,0.2); }
+
+    .member-avatar {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: var(--gris-claro);
+      border: 1px solid rgba(192,57,43,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem;
+      color: var(--rojo);
+    }
+
+    .member-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.3rem;
+    }
+
+    .member-role {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--rojo);
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .member-bio {
+      font-size: 0.85rem;
+      color: var(--blanco-sucio);
+      line-height: 1.7;
+    }
+
+    /* ── CANCIONES ── */
+
+.platform-btn {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--blanco-sucio);
+  background: transparent;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  border: 1px solid rgba(192,184,168,0.2);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.platform-btn:hover {
+  background: var(--rojo);
+  color: var(--blanco);
+  border-color: var(--rojo);
+}
+
+.platform-btn--active {
+  background: var(--rojo);
+  color: var(--blanco);
+  border-color: var(--rojo);
+}
+
+.platform-btn--active:hover {
+  background: transparent;
+  color: var(--rojo);
+}
+    #canciones {
+      background: var(--gris-oscuro);
+    }
+
+    .tracks-list {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .track-item {
+      display: grid;
+      grid-template-columns: 40px 1fr auto auto;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.5rem 2rem;
+      background: var(--gris-medio);
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .track-item:hover {
+      background: var(--gris-claro);
+      border-color: rgba(192,57,43,0.2);
+    }
+
+    .track-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: rgba(192,184,168,0.3);
+    }
+
+    .track-info { min-width: 0; }
+
+    .track-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+    }
+
+    .track-album {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--blanco-sucio);
+      letter-spacing: 0.1em;
+      margin-top: 0.2rem;
+    }
+
+    .track-link {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--rojo);
+      text-decoration: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .track-item:hover .track-link { opacity: 1; }
+
+    .track-duration {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: rgba(192,184,168,0.5);
+    }
+
+    /* ── MERCH ── */
+    #merch {
+      background: var(--negro);
+    }
+
+    .merch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 2px;
+      margin-top: 3rem;
+    }
+
+    .merch-card {
+      background: var(--gris-medio);
+      border: 1px solid rgba(255,255,255,0.04);
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .merch-card:hover { border-color: rgba(192,57,43,0.3); }
+
+    .merch-image {
+      width: 100%;
+      aspect-ratio: 1;
+      background: var(--gris-claro);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .merch-image::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 8px,
+        rgba(192,57,43,0.05) 8px,
+        rgba(192,57,43,0.05) 9px
+      );
+    }
+
+    .merch-placeholder-icon {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      color: rgba(192,184,168,0.3);
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 2.2;
+      position: relative;
+      z-index: 1;
+    }
+
+    .merch-info {
+      padding: 1.5rem 1.8rem;
+    }
+
+    .merch-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.3rem;
+    }
+
+    .merch-desc {
+      font-size: 0.8rem;
+      color: var(--blanco-sucio);
+      margin-bottom: 1.2rem;
+      line-height: 1.6;
+    }
+
+    .merch-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .merch-price {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      color: var(--rojo);
+      letter-spacing: 0.05em;
+    }
+
+    .merch-buy {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--blanco);
+      background: var(--rojo);
+      border: none;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .merch-buy:hover { background: var(--rojo-oscuro); }
+
+    /* ── CONTACTO ── */
+    #contacto {
+      background: var(--gris-oscuro);
+    }
+
+    .contacto-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      margin-top: 3rem;
+    }
+
+    .contacto-info p {
+      font-size: 0.9rem;
+      color: var(--blanco-sucio);
+      line-height: 1.9;
+      margin-bottom: 2rem;
+    }
+
+    .socials {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .social-link {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      color: var(--blanco-sucio);
+      text-decoration: none;
+      padding: 0.8rem 1rem;
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: all 0.2s;
+    }
+
+    .social-link:hover {
+      border-color: var(--rojo);
+      color: var(--rojo);
+    }
+
+    .social-icon {
+      width: 8px;
+      height: 8px;
+      background: var(--rojo);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-group label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--rojo);
+      text-transform: uppercase;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      background: var(--gris-medio);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--blanco);
+      padding: 0.9rem 1rem;
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 300;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--rojo);
+    }
+
+    .form-group textarea { min-height: 120px; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--negro);
+      border-top: 1px solid rgba(192,57,43,0.2);
+      padding: 3rem 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      color: var(--rojo);
+      letter-spacing: 0.1em;
+    }
+
+    .footer-copy {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: rgba(192,184,168,0.3);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      width: 40px;
+      height: 2px;
+      background: var(--rojo);
+      margin-bottom: 2rem;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 1.2rem 1.5rem; }
+      .nav-links { gap: 1.2rem; }
+      section { padding: 5rem 1.5rem; }
+      #about { grid-template-columns: 1fr; gap: 3rem; }
+      .contacto-grid { grid-template-columns: 1fr; gap: 3rem; }
+      footer { flex-direction: column; gap: 1rem; text-align: center; }
+      .track-item { grid-template-columns: 30px 1fr auto; }
+      .track-link { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  
+  <nav>
+    <a href="#hero" class="nav-logo">EPSB</a>
+    <ul class="nav-links">
+      <li><a href="#about">Nosotros</a></li>
+      <li><a href="#integrantes">Banda</a></li>
+      <li><a href="#canciones">Música</a></li>
+      <li><a href="#merch">Merch</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+
+  
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Rock Indie/Alternativo · Santa Cruz, Bolivia</p>
+      <h1 class="hero-title">El Primer<br/><span>Surfista</span><br/>Boliviano</h1>
+      <p class="hero-subtitle">Que raro se siente, quiero saltar y salir de aquí</p>
+      <div class="hero-cta">
+        <a href="#canciones" class="btn btn-primary">Escuchar Ahora</a>
+        <a href="#merch" class="btn btn-outline">Ver Merch</a>
+      </div>
+    </div>
+  </section>
+
+  
+  <section id="about">
+    <div class="about-text">
+      <p class="section-label">Quiénes somos</p>
+      <h2 class="section-title">Nuestra Historia</h2>
+      <div class="divider"></div>
+      
+      <p>
+        Banda de Rock alternativo fundada por Ricardo Salazar y el nombre de la banda por Ignacio Guzman en 2023, poco a poco esta banda fue tomando su propio público con sus propias composiciones abriéndose un pequeño espacio en la escena musical de Santa Cruz-Bolivia
+      </p>
+      <p>
+        Esta banda promete un sonido inclinado al Rock Alternativo, Indie Rock, Shoegaze entre otras cosas extrañas. Estamos conformados por 5 integrantes; cada uno de nosotros formamos una parte fundamental de esta banda, lo cual le da ese brillo especial de las cosas que se hacen con cariño.
+      </p>
+      <p>
+        Actualmente nos rascamos las nueces
+      </p>
+      <br/>
+      <a href="#contacto" class="btn btn-outline">Contáctanos</a>
+    </div>
+    <div class="about-image">
+      <div class="band-placeholder">
+        <img src="images/image1.jpg" alt="Bellos y hermosos chicos" style="width:100%;height:100%;object-fit:cover;">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+  <section id="integrantes">
+    <p class="section-label">La banda</p>
+    <h2 class="section-title">Los Integrantes</h2>
+    <div class="divider"></div>
+    <div class="members-grid">
+
+          
+<div class="member-card">
+  <div class="member-avatar" style="overflow:hidden; padding:0;">
+    <img src="images/image8.jpeg" alt="Richi" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+  </div>
+  <div class="member-name">Ricardo Salazar (Richi)</div>
+  <div class="member-role">Voz / Guitarra</div>
+  <p class="member-bio">La verdad es que compongo cuando estoy triste o mientras estoy en la ducha, ahi se me ocurren la mayoría de los riffs.</p>
+</div>
+
+<div class="member-card">
+  <div class="member-avatar" style="overflow:hidden; padding:0;">
+    <img src="images/image9.jpg" alt="Coco" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+  </div>
+  <div class="member-name">René Sánchez (Coco)</div>
+  <div class="member-role">Bajo</div>
+  <p class="member-bio">No sabía tocar el bajo cuando me integre en la banda, ahora ya se que notas hay en el diapason 👍🏻</p>
+</div>
+
+<div class="member-card">
+  <div class="member-avatar" style="overflow:hidden; padding:0;">
+    <img src="images/image10.jpg" alt="Suchas fc" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+  </div>
+  <div class="member-name">Mateo Aguilar</div>
+  <div class="member-role">Guitarra</div>
+  <p class="member-bio">Guitarrista principal y creador de la mayoría de los solos de la banda, solo toco la guitarra cuando hay ensayo, no me gusta la música; también soy creador del sexo.</p>
+</div>
+
+<div class="member-card">
+  <div class="member-avatar" style="overflow:hidden; padding:0;">
+    <img src="images/image11.jpg" alt="Kirbowo" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+  </div>
+  <div class="member-name">Diego Rojas (Dieguito)</div>
+  <div class="member-role">Batería</div>
+  <p class="member-bio">A veces me creo Bill Bruford, me cuesta no jugar con los grooves porque si no me aburro :p</p>
+</div>
+
+<div class="member-card">
+  <div class="member-avatar" style="overflow:hidden; padding:0;">
+    <img src="images/image0.jpg" alt="Sweet Ferret" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+  </div>
+  <div class="member-name">Nicolás Pérez (Ferret)</div>
+  <div class="member-role">Teclados/Ambientes</div>
+  <p class="member-bio">Meowwwwwww</p>
+</div>
+    </div>
+  </section>
+
+  
+  <section id="canciones">
+    <p class="section-label">Discografía</p>
+    <h2 class="section-title">Nuestra Música</h2>
+    <div class="divider"></div>
+    <div class="tracks-list">
+
+      
+
+  
+<div style="display:flex; gap:2rem; align-items:flex-start; background:var(--gris-medio); border:1px solid rgba(192,57,43,0.2); padding:2rem; margin-bottom:2px;">
+  
+  
+  <div style="width:120px; height:120px; flex-shrink:0; background:var(--gris-claro); border:1px solid rgba(192,57,43,0.3); overflow:hidden;">
+    <img src="images/image3.jpg" alt="Marea Alta Portada by Scrappy" style="width:100%; height:100%; object-fit:cover;">
+  </div>
+
+  
+  <div style="flex:1;">
+    <div style="font-family:'Space Mono',monospace; font-size:0.6rem; letter-spacing:0.3em; color:var(--rojo); text-transform:uppercase; margin-bottom:0.4rem;">Álbum</div>
+    <div style="font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:0.05em; margin-bottom:0.2rem;">MAREA ALTA</div>
+    <div style="font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--blanco-sucio); margin-bottom:1.2rem;">2026 · 12 canciones</div>
+
+    
+    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+      <a href="https://open.spotify.com/album/4fV69bNZTSu21p9fxAAeHZ?si=9v1QxbFdRj2L69lhd9teKw" target="_blank" class="platform-btn platform-btn--active">Spotify</a>
+      <a href="https://music.youtube.com/playlist?list=OLAK5uy_lkJdcNLL73PV3GJO1cFMgsVfPn3REMNwc&si=2L9O9ezaP8bd3m8R" target="_blank" class="platform-btn">YouTube Music</a>
+      <a href="https://music.apple.com/bo/album/marea-alta/1862278567" target="_blank" class="platform-btn">Apple Music</a>
+    </div>
+  </div>
+
+</div>
+
+      <div class="track-item">
+        <span class="track-num">01</span>
+        <div class="track-info">
+          <div class="track-name">¿Y Ahora?</div>
+          <div class="track-album">MAREA ALTA / Single · 2025</div>
+        </div>
+        <a href="https://open.spotify.com/intl-es/track/3nFNAaS8pCEa21kwSb7tT9?si=ca089970494b43f2" class="track-link" target="_blank">Spotify ↗</a>
+        <span class="track-duration">1:54</span>
+      </div>
+
+      <div class="track-item">
+        <span class="track-num">02</span>
+        <div class="track-info">
+          <div class="track-name">Surfista</div>
+          <div class="track-album">MAREA ALTA / Single · 2025</div>
+        </div>
+        <a href="https://open.spotify.com/intl-es/track/4MvJO1OID096H1khRgw8TP?si=c80ed37699764a99" class="track-link" target="_blank">Spotify ↗</a>
+        <span class="track-duration">3:44</span>
+      </div>
+
+      <div class="track-item">
+        <span class="track-num">03</span>
+        <div class="track-info">
+          <div class="track-name">Fuego en Vos</div>
+          <div class="track-album">MAREA ALTA / Single · 2024</div>
+        </div>
+        <a href="https://open.spotify.com/intl-es/track/6zFl8Za3mokpaoHMBPFQbZ?si=107424fb9a644f99" class="track-link" target="_blank">Spotify ↗</a>
+        <span class="track-duration">4:40</span>
+      </div>
+
+    </div>
+  </section>
+
+  
+  <section id="merch">
+    <p class="section-label">Tienda</p>
+    <h2 class="section-title">Merch</h2>
+    <div class="divider"></div>
+    <div class="merch-grid">
+
+      
+      <div class="merch-card">
+        <div class="merch-image">
+          
+          <img src="images/image2.jpg" alt="Seguimos Trabajando para Usted"style="width:100%;height:100%;object-fit:cover;">
+        </div>
+        <div class="merch-info">
+          <div class="merch-name">Polera Oficial</div>
+          <p class="merch-desc">100% algodón, serigrafiada. Logo de la banda en el frente. Tallas S – XXL.</p>
+          <div class="merch-footer">
+            <span class="merch-price">Bs. ???</span>
+            
+            <a href="https://wa.me/59170088343?text=Quiero%20comprar%20la%20remera" class="merch-buy" target="_blank">Pedir</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="merch-card">
+        <div class="merch-image">
+          <img src="images/image10.jpg" style="width:100%;height:100%;object-fit:cover;">
+        </div>
+        <div class="merch-info">
+          <div class="merch-name">CD</div>
+          <p class="merch-desc">Edición física del álbum. Incluye booklet con letras y fotos.</p>
+          <div class="merch-footer">
+            <span class="merch-price">Bs. 100</span>
+            <a href="https://wa.me/59170088343?text=Holaaa,%20me%20gustaría%20comprar%20el%20CD%20del%20Marea%20Alta%20:P" class="merch-buy" target="_blank">Pedir</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  
+  <section id="contacto">
+    <p class="section-label">Contacto</p>
+    <h2 class="section-title">Hablemos</h2>
+    <div class="divider"></div>
+    <div class="contacto-grid">
+      <div class="contacto-info">
+        
+        <p>Para shows, prensa, colaboraciones o simplemente saludarnos, escríbenos. Respondemos siempre.</p>
+        <div class="socials">
+          <a href="https://instagram.com/elprimersurfistaboliviano" class="social-link" target="_blank">
+            <div class="social-icon"></div>
+            Instagram
+          </a>
+          <a href="https://www.facebook.com/share/1Bfyy9sPBd/?mibextid=wwXIfr" class="social-link" target="_blank">
+            <div class="social-icon"></div>
+            Facebook
+          </a>
+          <a href="https://open.spotify.com/intl-es/artist/1mkoeUP31t0wWB8PrTI8md?si=U97y1t5VRT2HtKQBM2YXLQ" class="social-link" target="_blank">
+            <div class="social-icon"></div>
+            Spotify
+          </a>
+          <a href="https://youtube.com/@ElPrimerSurfistaBoliviano" class="social-link" target="_blank">
+            <div class="social-icon"></div>
+            YouTube
+          </a>
+          <a href="https://tiktok.com/@primersurfista" class="social-link" target="_blank">
+            <div class="social-icon"></div>
+            TikTok
+          </a>
+          <a href="https://wa.me/59174617006?text=Holaaa,%20me%20gustaría%20negociar%20la%20participación%20del%20Primer%20Surfista%20Boliviano%20para%20una%20fecha%20que%20les%20puede%20interesar" class="social-link" target="_blank">
+            <div class="social-icon"></div>
+            Management/Booking
+          </a>
+        </div>
+      </div>
+
+      
+      <div>
+        <form class="contact-form" action="https://formspree.io/f/mjgzwzzg" method="POST">
+          <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="tu@email.com" required />
+          </div>
+          <div class="form-group">
+            <label for="mensaje">Mensaje</label>
+            <textarea id="mensaje" name="mensaje" placeholder="¿En qué andas?" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:fit-content">Enviar Mensaje</button>
+          
+        </form>
+      </div>
+    </div>
+  </section>
+
+  
+  <footer>
+    <div class="footer-logo">El Primer Surfista Boliviano</div>
+    <div class="footer-copy">© 2023 EPSB · Todos los derechos reservados</div>
+  </footer>
+
+</body>
+</html>
