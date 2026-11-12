@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Admin · EPSB</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;600&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--rojo:#c0392b;--negro:#0a0a0a;--g1:#141414;--g2:#1e1e1e;--g3:#2a2a2a;--blanco:#e8e8e8;--sucio:#c0b8a8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--negro);color:var(--blanco);font-family:'Oswald',sans-serif;font-weight:300;min-height:100vh}
+h1,h2{font-family:'Bebas Neue',sans-serif;font-weight:400;letter-spacing:.06em}
+h1{font-size:1.6rem;color:var(--rojo)} h2{font-size:2.2rem;margin-bottom:1.2rem}
+header{display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;border-bottom:1px solid rgba(192,57,43,.2);gap:1rem;flex-wrap:wrap}
+main{max-width:980px;margin:0 auto;padding:2rem 1.2rem 5rem}
+.tabs{display:flex;gap:2px;margin-bottom:2rem;flex-wrap:wrap}
+.tab,.b{font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;background:var(--g2);color:var(--sucio);border:1px solid rgba(255,255,255,.08);padding:.8rem 1.3rem;cursor:pointer}
+.tab.on,.b.p{background:var(--rojo);color:var(--blanco);border-color:var(--rojo)}
+.b:hover,.tab:hover{border-color:var(--rojo)} .b.d:hover{background:#7b1a12}
+input,select{background:var(--g2);border:1px solid rgba(255,255,255,.1);color:var(--blanco);padding:.8rem 1rem;font:inherit;font-size:.95rem;min-width:0}
+input:focus,select:focus{outline:none;border-color:var(--rojo)}
+input[type=color]{padding:.2rem;height:3rem;width:100%;cursor:pointer}
+label{display:flex;flex-direction:column;gap:.4rem;font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.15em;color:var(--rojo);text-transform:uppercase;flex:1;min-width:140px}
+.row{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:1.2rem;align-items:flex-end}
+.it{display:flex;align-items:center;gap:1rem;background:var(--g2);padding:.8rem 1rem;margin-bottom:2px;flex-wrap:wrap}
+.it img{width:80px;aspect-ratio:16/9;object-fit:cover}
+.it .s{flex:1;min-width:160px} .it small{display:block;font-family:'Space Mono',monospace;font-size:.6rem;color:var(--sucio);margin-top:.2rem}
+.m{color:var(--sucio);font-size:.9rem} .err{color:#e74c3c}
+.prev{padding:1.5rem;margin:1.5rem 0;border:1px solid rgba(255,255,255,.1)} .prev b{font-family:'Bebas Neue',sans-serif;font-size:2rem;font-weight:400;display:block}
+.prev span{display:inline-block;padding:.6rem 1.2rem;margin-top:.8rem;font-family:'Space Mono',monospace;font-size:.65rem}
+#login{max-width:380px;margin:12vh auto;padding:0 1.2rem;display:flex;flex-direction:column;gap:1rem}
+#toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--rojo);padding:.8rem 1.5rem;font-family:'Space Mono',monospace;font-size:.7rem;display:none;z-index:9}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<form id="login">
+  <h1>Panel EPSB</h1>
+  <label>Email<input id="lE" type="email" required autocomplete="username"></label>
+  <label>Contraseña<input id="lP" type="password" required autocomplete="current-password"></label>
+  <button class="b p">Entrar</button>
+  <p class="err" id="lErr"></p>
+</form>
+
+<div id="app" hidden>
+  <header><h1>Panel EPSB</h1><div><span class="m" id="who"></span> <button class="b" id="out">Salir</button></div></header>
+  <main>
+    <div class="tabs">
+      <button class="tab" data-t="colores">Colores</button><button class="tab" data-t="videos">Videos</button>
+      <button class="tab" data-t="shows">Shows</button><button class="tab" data-t="pedidos">Pedidos</button>
+    </div>
+    <div id="view"></div>
+  </main>
+</div>
+<div id="toast"></div>
+
+<script>
+const CONFIG = { SUPABASE_URL: '', SUPABASE_KEY: '' };   // los mismos de index.html
+const U = CONFIG.SUPABASE_URL, K = CONFIG.SUPABASE_KEY;
+const DEF = { rojo: '#c0392b', fondo: '#0a0a0a', texto: '#e8e8e8' };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let ses = null; try { ses = JSON.parse(localStorage.getItem('epsb_ses')); } catch (e) {}
+const keep = s => { ses = s; try { s ? localStorage.setItem('epsb_ses', JSON.stringify(s)) : localStorage.removeItem('epsb_ses'); } catch (e) {} };
+function toast(t) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; setTimeout(() => e.style.display = 'none', 2500); }
+
+async function auth(grant, body) {
+  const r = await fetch(`${U}/auth/v1/token?grant_type=${grant}`, { method: 'POST', headers: { apikey: K, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json(); if (!r.ok) throw new Error(j.error_description || j.msg || 'No se pudo entrar');
+  keep(j); return j;
+}
+async function api(path, opt = {}, retry = true) {
+  const r = await fetch(U + '/rest/v1/' + path, { ...opt, headers: { apikey: K, Authorization: 'Bearer ' + ses.access_token, 'Content-Type': 'application/json', ...(opt.headers || {}) } });
+  if (r.status === 401 && retry) { try { await auth('refresh_token', { refresh_token: ses.refresh_token }); } catch (e) { logout(); throw e; } return api(path, opt, false); }
+  const t = await r.text(), j = t ? JSON.parse(t) : null;
+  if (!r.ok) throw new Error(j?.message || 'Error');
+  return j;
+}
+const MIN = { headers: { Prefer: 'return=minimal' } };
+function logout() { keep(null); $('#app').hidden = true; $('#login').hidden = false; }
+
+async function enter() {
+  try {
+    const a = await api('admins?select=user_id');
+    if (!a.length) { $('#lErr').textContent = 'Esta cuenta no tiene permisos de administrador.'; return logout(); }
+  } catch (e) { return logout(); }
+  $('#who').textContent = ses.user?.email || '';
+  $('#login').hidden = true; $('#app').hidden = false; go('colores');
+}
+$('#login').onsubmit = async e => {
+  e.preventDefault(); $('#lErr').textContent = '';
+  try { await auth('password', { email: $('#lE').value, password: $('#lP').value }); await enter(); }
+  catch (err) { $('#lErr').textContent = err.message; }
+};
+$('#out').onclick = logout;
+document.querySelector('.tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) go(b.dataset.t); };
+function go(t) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  $('#view').innerHTML = '<p class="m">Cargando…</p>';
+  ({ colores, videos, shows, pedidos })[t]().catch(e => $('#view').innerHTML = `<p class="err">${esc(e.message)}</p>`);
+}
+const run = async (fn, ok, again) => { try { await fn(); toast(ok); go(again); } catch (e) { toast('Error: ' + e.message); } };
+
+/* ── COLORES ── */
+async function colores() {
+  const c = { ...DEF, ...((await api('ajustes?clave=eq.colores&select=valor'))[0]?.valor || {}) };
+  const f = [['rojo', 'Color principal'], ['fondo', 'Fondo'], ['texto', 'Texto']];
+  $('#view').innerHTML = `<h2>Colores</h2><div class="row">${f.map(([k, l]) => `<label>${l}<input type="color" id="c_${k}" value="${c[k]}"></label>`).join('')}</div>
+    <div class="prev" id="prev"><b>El Primer Surfista Boliviano</b><p>Así se verán los textos y el fondo.</p><span>BOTÓN</span></div>
+    <button class="b p" id="sv">Guardar cambios</button> <button class="b" id="rs">Restaurar originales</button>
+    <p class="m" style="margin-top:1rem">Los cambios se ven en la web al recargarla. Las tarjetas grises no cambian.</p>`;
+  const val = () => Object.fromEntries(f.map(([k]) => [k, $('#c_' + k).value]));
+  const pv = () => { const v = val(), p = $('#prev'); p.style.background = v.fondo; p.style.color = v.texto; p.querySelector('span').style.background = v.rojo; p.querySelector('b').style.color = v.rojo; };
+  f.forEach(([k]) => $('#c_' + k).oninput = pv); pv();
+  const put = v => run(() => api('ajustes', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ clave: 'colores', valor: v }) }), 'Colores guardados', 'colores');
+  $('#sv').onclick = () => put(val()); $('#rs').onclick = () => put(DEF);
+}
+
+/* ── VIDEOS ── */
+async function videos() {
+  const l = await api('videos?select=*&order=id.desc');
+  $('#view').innerHTML = `<h2>Videos</h2><form class="row" id="vf"><label>Link de YouTube<input id="vu" required placeholder="https://youtu.be/..."></label><label>Título<input id="vt" required maxlength="100"></label><button class="b p">Agregar</button></form>
+    ${l.map(v => `<div class="it"><img src="https://i.ytimg.com/vi/${esc(v.youtube_id)}/default.jpg" alt=""><span class="s">${esc(v.titulo)}</span><button class="b d" data-del="${v.id}">Quitar</button></div>`).join('') || '<p class="m">Aún no hay videos. Mientras tanto, la web muestra los de la lista del código.</p>'}`;
+  $('#vf').onsubmit = e => {
+    e.preventDefault();
+    const m = $('#vu').value.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
+    if (!m) return toast('Ese link no parece de YouTube');
+    run(() => api('videos', { method: 'POST', ...MIN, body: JSON.stringify({ youtube_id: m[1], titulo: $('#vt').value }) }), 'Video agregado', 'videos');
+  };
+  $('#view').onclick = e => { const b = e.target.closest('[data-del]'); if (b && confirm('¿Quitar este video?')) run(() => api('videos?id=eq.' + b.dataset.del, { method: 'DELETE', ...MIN }), 'Video quitado', 'videos'); };
+}
+
+/* ── SHOWS ── */
+async function shows() {
+  const l = await api('eventos?select=*&order=fecha.desc'), loc = d => new Date(new Date(d) - new Date(d).getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  $('#view').innerHTML = `<h2>Shows</h2><form class="row" id="sf"><input type="hidden" id="sid">
+    <label>Nombre<input id="sn" required></label><label>Fecha y hora<input id="sd" type="datetime-local" required></label><label>Lugar<input id="sl" required></label>
+    <label>Precio (Bs)<input id="sp" type="number" min="0" step="1" required></label><label>Capacidad<input id="sc" type="number" min="1" required></label>
+    <button class="b p" id="sb">Agregar show</button></form>
+    ${l.map(s => `<div class="it"><span class="s">${esc(s.nombre)}<small>${new Date(s.fecha).toLocaleString('es-BO', { dateStyle: 'medium', timeStyle: 'short' })} · ${esc(s.lugar)} · Bs. ${s.precio} · cupo ${s.capacidad}${s.activo ? '' : ' · OCULTO'}</small></span>
+      <button class="b" data-ed="${s.id}">Editar</button><button class="b" data-tg="${s.id}">${s.activo ? 'Ocultar' : 'Mostrar'}</button><button class="b d" data-rm="${s.id}">Borrar</button></div>`).join('') || '<p class="m">No hay shows todavía.</p>'}`;
+  $('#sf').onsubmit = e => {
+    e.preventDefault(); const id = $('#sid').value;
+    const body = { nombre: $('#sn').value, fecha: new Date($('#sd').value).toISOString(), lugar: $('#sl').value, precio: +$('#sp').value, capacidad: +$('#sc').value };
+    run(() => api(id ? 'eventos?id=eq.' + id : 'eventos', { method: id ? 'PATCH' : 'POST', ...MIN, body: JSON.stringify(body) }), 'Show guardado', 'shows');
+  };
+  $('#view').onclick = e => {
+    const g = a => e.target.closest(`[data-${a}]`)?.dataset[a], ed = g('ed'), tg = g('tg'), rm = g('rm'), s = x => l.find(v => v.id == x);
+    if (ed) { const v = s(ed); $('#sid').value = v.id; $('#sn').value = v.nombre; $('#sd').value = loc(v.fecha); $('#sl').value = v.lugar; $('#sp').value = v.precio; $('#sc').value = v.capacidad; $('#sb').textContent = 'Guardar cambios'; scrollTo(0, 0); }
+    if (tg) run(() => api('eventos?id=eq.' + tg, { method: 'PATCH', ...MIN, body: JSON.stringify({ activo: !s(tg).activo }) }), 'Listo', 'shows');
+    if (rm && confirm('¿Borrar este show? Si ya tiene reservas, mejor ocúltalo.')) run(() => api('eventos?id=eq.' + rm, { method: 'DELETE', ...MIN }), 'Show borrado', 'shows');
+  };
+}
+
+/* ── PEDIDOS ── */
+async function pedidos() {
+  const l = await api('pedidos?select=*,eventos(nombre)&order=creado.desc'), pend = l.filter(p => p.estado === 'pendiente').length;
+  $('#view').innerHTML = `<h2>Pedidos</h2><p class="m" style="margin-bottom:1rem">${pend} pendiente(s) de pago · ${l.length} en total</p>
+    ${l.map(p => `<div class="it"><span class="s"><b>${esc(p.codigo)}</b> · ${esc(p.nombre)}<small>${esc(p.eventos?.nombre)} · ${p.cantidad} entrada(s) · Bs. ${p.total} · ${esc(p.email)} · <a style="color:var(--rojo)" target="_blank" href="https://wa.me/591${esc(p.telefono.replace(/\D/g, '').replace(/^591/, ''))}">${esc(p.telefono)}</a></small></span>
+      <select data-id="${p.id}">${['pendiente', 'pagado', 'cancelado'].map(e => `<option ${e === p.estado ? 'selected' : ''}>${e}</option>`).join('')}</select></div>`).join('') || '<p class="m">Todavía no hay pedidos.</p>'}`;
+  $('#view').onchange = e => { const id = e.target.dataset.id; if (id) run(() => api('pedidos?id=eq.' + id, { method: 'PATCH', ...MIN, body: JSON.stringify({ estado: e.target.value }) }), 'Pedido actualizado', 'pedidos'); };
+}
+
+if (ses) enter();
+</script>
+</body>
+</html>

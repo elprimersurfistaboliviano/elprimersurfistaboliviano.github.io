@@ -688,6 +688,47 @@
       .track-item { grid-template-columns: 30px 1fr auto; }
       .track-link { display: none; }
     }
+
+    /* ── VIDEOS ── */
+    #videos { background: var(--negro); }
+    .videos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2px; margin: 3rem 0 2rem; }
+    .video-card { background: var(--gris-medio); border: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: border-color 0.3s; text-align: left; color: inherit; font: inherit; padding: 0; }
+    .video-card:hover, .video-card:focus-visible { border-color: rgba(192,57,43,0.5); outline: none; }
+    .video-thumb { aspect-ratio: 16/9; background: var(--gris-claro) center/cover; position: relative; }
+    .video-thumb::after { content: '▶'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--blanco); background: rgba(10,10,10,0.35); transition: background 0.2s; }
+    .video-card:hover .video-thumb::after { background: rgba(192,57,43,0.45); }
+    .video-title { padding: 1rem 1.2rem; font-size: 0.95rem; font-weight: 400; letter-spacing: 0.05em; }
+
+    /* ── SHOWS / ENTRADAS ── */
+    #shows { background: var(--gris-oscuro); }
+    .shows-list { margin-top: 3rem; display: flex; flex-direction: column; gap: 2px; }
+    .show-item { display: grid; grid-template-columns: 90px 1fr auto auto; gap: 1.5rem; align-items: center; padding: 1.5rem 2rem; background: var(--gris-medio); border: 1px solid rgba(255,255,255,0.04); }
+    .show-date { font-family: 'Bebas Neue', sans-serif; text-align: center; color: var(--rojo); line-height: 1; }
+    .show-date b { display: block; font-size: 2.6rem; font-weight: 400; }
+    .show-date span { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; }
+    .show-name { font-size: 1.2rem; font-weight: 400; letter-spacing: 0.05em; }
+    .show-meta { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--blanco-sucio); letter-spacing: 0.1em; margin-top: 0.3rem; }
+    .show-price { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--rojo); letter-spacing: 0.05em; }
+    .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── MODAL ── */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 3rem 1rem; overflow-y: auto; }
+    .modal.open { display: flex; }
+    .modal-box { width: 100%; max-width: 900px; position: relative; }
+    .modal-box.narrow { max-width: 460px; background: var(--gris-medio); padding: 2.2rem 2rem; border: 1px solid rgba(192,57,43,0.3); margin: auto; }
+    .modal-close { position: absolute; top: 0.6rem; right: 0.8rem; background: none; border: 0; color: var(--blanco-sucio); font-size: 1.2rem; cursor: pointer; }
+    .modal-close:hover { color: var(--rojo); }
+    .video-box .modal-close { top: -2.4rem; right: 0; }
+    .ticket-total { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--rojo); letter-spacing: 0.05em; }
+    .ticket-code { font-family: 'Bebas Neue', sans-serif; font-size: 2.6rem; color: var(--rojo); letter-spacing: 0.1em; }
+    .ticket-note { font-size: 0.85rem; line-height: 1.7; color: var(--blanco-sucio); margin: 0.8rem 0 1.2rem; }
+
+    @media (max-width: 768px) {
+      .nav-links { gap: 0.7rem; }
+      .nav-links a { font-size: 0.55rem; letter-spacing: 0.08em; }
+      .show-item { grid-template-columns: 70px 1fr; padding: 1.2rem; }
+      .show-price, .show-item .btn { grid-column: 2; }
+    }
   </style>
 </head>
 <body>
@@ -699,6 +740,8 @@
       <li><a href="#about">Nosotros</a></li>
       <li><a href="#integrantes">Banda</a></li>
       <li><a href="#canciones">Música</a></li>
+      <li><a href="#videos">Videos</a></li>
+      <li><a href="#shows">Shows</a></li>
       <li><a href="#merch">Merch</a></li>
       <li><a href="#contacto">Contacto</a></li>
     </ul>
@@ -777,7 +820,7 @@
   </div>
   <div class="member-name">Mateo Aguilar</div>
   <div class="member-role">Guitarra</div>
-  <p class="member-bio">Guitarrista principal y creador de la mayoría de los solos de la banda, solo toco la guitarra cuando hay ensayo, no me gusta la música.</p>
+  <p class="member-bio">Guitarrista principal y creador de la mayoría de los solos de la banda, solo toco la guitarra cuando hay ensayo, no me gusta la música; también soy creador del sexo.</p>
 </div>
 
 <div class="member-card">
@@ -867,6 +910,21 @@
   </section>
 
   
+  <section id="videos">
+    <p class="section-label">Míranos</p>
+    <h2 class="section-title">Videos</h2>
+    <div class="divider"></div>
+    <div class="videos-grid" id="videosGrid"></div>
+    <a href="https://youtube.com/@ElPrimerSurfistaBoliviano" target="_blank" class="btn btn-outline">Ver canal completo</a>
+  </section>
+
+  <section id="shows">
+    <p class="section-label">En vivo</p>
+    <h2 class="section-title">Shows y Entradas</h2>
+    <div class="divider"></div>
+    <div class="shows-list" id="showsList"><p class="show-meta">Cargando fechas…</p></div>
+  </section>
+
   <section id="merch">
     <p class="section-label">Tienda</p>
     <h2 class="section-title">Merch</h2>
@@ -972,5 +1030,165 @@
     <div class="footer-copy">© 2023 EPSB · Todos los derechos reservados</div>
   </footer>
 
+
+  <!-- Modal video -->
+  <div class="modal" id="videoModal">
+    <div class="modal-box video-box">
+      <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      <div style="aspect-ratio:16/9"><iframe id="videoFrame" style="width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="Video de la banda"></iframe></div>
+    </div>
+  </div>
+
+  <!-- Modal entradas -->
+  <div class="modal" id="ticketModal">
+    <div class="modal-box narrow">
+      <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      <div id="ticketStep1">
+        <h3 class="section-title" style="font-size:2rem;margin-bottom:0.3rem" id="tTitulo"></h3>
+        <p class="show-meta" id="tMeta" style="margin-bottom:1.5rem"></p>
+        <form class="contact-form" id="ticketForm">
+          <div class="form-group"><label for="tNombre">Nombre</label><input id="tNombre" name="nombre" required maxlength="80"></div>
+          <div class="form-group"><label for="tTel">WhatsApp</label><input id="tTel" name="telefono" type="tel" required maxlength="20" placeholder="7XXXXXXX"></div>
+          <div class="form-group"><label for="tEmail">Email</label><input id="tEmail" name="email" type="email" required maxlength="120"></div>
+          <div class="form-group"><label for="tCant">Cantidad</label><input id="tCant" name="cantidad" type="number" min="1" max="10" value="1" required></div>
+          <div class="ticket-total" id="tTotal"></div>
+          <button type="submit" class="btn btn-primary" id="tBtn">Reservar entradas</button>
+        </form>
+      </div>
+      <div id="ticketStep2" hidden>
+        <p class="section-label">Reserva lista</p>
+        <div class="ticket-code" id="dCodigo"></div>
+        <p class="ticket-note" id="dNota"></p>
+        <img id="dQR" src="" alt="QR de pago" style="width:100%;max-width:240px;display:block;margin:0 auto 1.2rem" onerror="this.remove()">
+        <a id="dWA" class="btn btn-primary" target="_blank" style="width:100%;text-align:center">Enviar comprobante por WhatsApp</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ═══ CONFIGURACIÓN ═══ */
+const CONFIG = {
+  SUPABASE_URL: '',   // ej: https://abcd1234.supabase.co  (vacío = modo sin base de datos)
+  SUPABASE_KEY: '',   // la clave "anon public" de Supabase
+  WHATSAPP: '59170088343',
+  QR_PAGO: 'images/qr-pago.png'
+};
+
+// IDs de YouTube: lo que va después de "v=" en la URL del video
+const VIDEOS = [
+  { id: 'REEMPLAZA_ID_1', titulo: 'Título del video 1' },
+  { id: 'REEMPLAZA_ID_2', titulo: 'Título del video 2' },
+  { id: 'REEMPLAZA_ID_3', titulo: 'Título del video 3' }
+];
+
+// Solo se usa si NO hay base de datos. Borra el ejemplo antes de publicar.
+const SHOWS_LOCAL = [
+  { id: 1, nombre: 'Show de ejemplo (borrar)', fecha: '2026-12-20T20:00:00-04:00', lugar: 'Santa Cruz', precio: 30, disponibles: 100 }
+];
+
+/* ═══ UTILIDADES ═══ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const HAS_DB = !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY);
+async function sb(path, opt = {}) {
+  const r = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/' + path, { ...opt, headers: { apikey: CONFIG.SUPABASE_KEY, Authorization: 'Bearer ' + CONFIG.SUPABASE_KEY, 'Content-Type': 'application/json' } });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.message || 'Error de conexión');
+  return j;
+}
+const openModal = id => $(id).classList.add('open');
+function closeModals() {
+  document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
+  $('#videoFrame').src = '';
+}
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m || e.target.hasAttribute('data-close')) closeModals(); }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
+
+/* ═══ VIDEOS ═══ */
+function renderVideos(list) {
+  $('#videosGrid').innerHTML = list.map(v => `
+    <button class="video-card" data-id="${esc(v.id)}">
+      <div class="video-thumb" style="background-image:url(https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg)"></div>
+      <div class="video-title">${esc(v.titulo)}</div>
+    </button>`).join('');
+}
+if (HAS_DB) {
+  sb('videos?select=youtube_id,titulo&order=id.desc')
+    .then(r => renderVideos(r.length ? r.map(v => ({ id: v.youtube_id, titulo: v.titulo })) : VIDEOS))
+    .catch(() => renderVideos(VIDEOS));
+} else renderVideos(VIDEOS);
+
+/* Colores guardados desde el panel admin */
+(async function loadTheme() {
+  if (!HAS_DB) return;
+  try {
+    const c = (await sb('ajustes?clave=eq.colores&select=valor'))[0]?.valor; if (!c) return;
+    const st = document.documentElement.style;
+    if (c.rojo) { st.setProperty('--rojo', c.rojo); st.setProperty('--acento', c.rojo); st.setProperty('--rojo-oscuro', `color-mix(in srgb, ${c.rojo} 60%, black)`); }
+    if (c.fondo) st.setProperty('--negro', c.fondo);
+    if (c.texto) st.setProperty('--blanco', c.texto);
+  } catch (e) {}
+})();
+$('#videosGrid').addEventListener('click', e => {
+  const c = e.target.closest('.video-card'); if (!c) return;
+  $('#videoFrame').src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(c.dataset.id)}?autoplay=1&rel=0`;
+  openModal('#videoModal');
+});
+
+/* ═══ SHOWS Y ENTRADAS ═══ */
+let current = null;
+async function loadShows() {
+  let list = SHOWS_LOCAL;
+  if (HAS_DB) { try { list = await sb('eventos_publicos?select=*&order=fecha'); } catch (e) { console.error(e); list = []; } }
+  list = list.filter(s => new Date(s.fecha) >= new Date());
+  const box = $('#showsList');
+  if (!list.length) { box.innerHTML = '<p class="show-meta">Pronto anunciaremos nuevas fechas. Síguenos en redes.</p>'; return; }
+  box.innerHTML = list.map((s, i) => {
+    const d = new Date(s.fecha), agotado = s.disponibles <= 0;
+    return `<div class="show-item">
+      <div class="show-date"><b>${d.getDate()}</b><span>${d.toLocaleDateString('es-BO', { month: 'short' })}</span></div>
+      <div><div class="show-name">${esc(s.nombre)}</div>
+        <div class="show-meta">${esc(s.lugar)} · ${d.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })}${agotado ? '' : ' · quedan ' + s.disponibles}</div></div>
+      <div class="show-price">${s.precio > 0 ? 'Bs. ' + s.precio : 'Gratis'}</div>
+      <button class="btn btn-primary" data-i="${i}" ${agotado ? 'disabled' : ''}>${agotado ? 'Agotado' : 'Comprar'}</button>
+    </div>`;
+  }).join('');
+  box.onclick = e => {
+    const b = e.target.closest('button[data-i]'); if (!b || b.disabled) return;
+    current = list[+b.dataset.i];
+    $('#tTitulo').textContent = current.nombre;
+    $('#tMeta').textContent = `${current.lugar} · ${new Date(current.fecha).toLocaleString('es-BO', { dateStyle: 'medium', timeStyle: 'short' })}`;
+    $('#tCant').max = Math.min(10, current.disponibles);
+    $('#ticketForm').reset(); updTotal();
+    $('#ticketStep1').hidden = false; $('#ticketStep2').hidden = true;
+    openModal('#ticketModal');
+  };
+}
+const updTotal = () => { $('#tTotal').textContent = 'Total: Bs. ' + (current ? current.precio * (+$('#tCant').value || 0) : 0); };
+$('#tCant').addEventListener('input', updTotal);
+
+$('#ticketForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(e.target)), n = +d.cantidad, btn = $('#tBtn');
+  btn.disabled = true; btn.textContent = 'Reservando…';
+  let codigo = '—', total = current.precio * n;
+  if (HAS_DB) {
+    try {
+      const r = await sb('rpc/reservar_entradas', { method: 'POST', body: JSON.stringify({ p_evento: current.id, p_nombre: d.nombre, p_email: d.email, p_telefono: d.telefono, p_cantidad: n }) });
+      codigo = r.codigo; total = r.total;
+    } catch (err) { alert('No se pudo reservar: ' + err.message); btn.disabled = false; btn.textContent = 'Reservar entradas'; return; }
+  }
+  $('#dCodigo').textContent = codigo;
+  $('#dNota').textContent = total > 0
+    ? `Paga Bs. ${total} por QR y envíanos el comprobante por WhatsApp con tu código. Cuando lo confirmemos, te llegará tu entrada por email.`
+    : 'Te confirmaremos tu entrada por WhatsApp y email.';
+  $('#dQR').src = total > 0 ? CONFIG.QR_PAGO : '';
+  $('#dWA').href = `https://wa.me/${CONFIG.WHATSAPP}?text=` + encodeURIComponent(`Hola, reservé ${n} entrada(s) para "${current.nombre}". Código: ${codigo}. Nombre: ${d.nombre}. Total: Bs. ${total}. Adjunto mi comprobante.`);
+  $('#ticketStep1').hidden = true; $('#ticketStep2').hidden = false;
+  btn.disabled = false; btn.textContent = 'Reservar entradas';
+  if (HAS_DB) loadShows();
+});
+loadShows();
+</script>
 </body>
 </html>
