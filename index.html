@@ -1189,6 +1189,48 @@ $('#ticketForm').addEventListener('submit', async e => {
   if (HAS_DB) loadShows();
 });
 loadShows();
+
+/* Contenido editable desde el panel admin */
+(async function loadContent() {
+  if (!HAS_DB) return;
+  try {
+    const [t, ints, prods] = await Promise.all([
+      sb('ajustes?clave=eq.textos&select=valor'),
+      sb('integrantes?select=*&order=orden,id'),
+      sb('productos?select=*&activo=eq.true&order=orden,id')
+    ]);
+    const x = t[0]?.valor;
+    if (x) {
+      if (x.hero_eyebrow) $('.hero-eyebrow').textContent = x.hero_eyebrow;
+      if (x.hero_subtitulo) $('.hero-subtitle').textContent = x.hero_subtitulo;
+      if (x.historia) {
+        const old = [...document.querySelectorAll('.about-text > p:not(.section-label)')];
+        x.historia.split(/\n\s*\n/).filter(p => p.trim()).forEach(p => { const e = document.createElement('p'); e.textContent = p.trim(); old[0].before(e); });
+        old.forEach(p => p.remove());
+      }
+      if (x.foto_historia) { const im = $('.band-placeholder img'); if (im) im.src = x.foto_historia; }
+    }
+    if (ints.length) $('.members-grid').innerHTML = ints.map(m => `
+      <div class="member-card">
+        <div class="member-avatar" style="overflow:hidden;padding:0">${m.foto_url ? `<img src="${esc(m.foto_url)}" alt="${esc(m.nombre)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : esc(m.nombre[0])}</div>
+        <div class="member-name">${esc(m.nombre)}</div>
+        <div class="member-role">${esc(m.rol)}</div>
+        <p class="member-bio">${esc(m.bio)}</p>
+      </div>`).join('');
+    if (prods.length) $('.merch-grid').innerHTML = prods.map(p => `
+      <div class="merch-card">
+        <div class="merch-image">${p.foto_url ? `<img src="${esc(p.foto_url)}" alt="${esc(p.nombre)}" style="width:100%;height:100%;object-fit:cover">` : ''}</div>
+        <div class="merch-info">
+          <div class="merch-name">${esc(p.nombre)}</div>
+          <p class="merch-desc">${esc(p.descripcion)}</p>
+          <div class="merch-footer">
+            <span class="merch-price">${esc(p.precio)}</span>
+            <a class="merch-buy" target="_blank" href="https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent('Hola, me gustaría comprar: ' + p.nombre)}">Pedir</a>
+          </div>
+        </div>
+      </div>`).join('');
+  } catch (e) { console.error(e); }
+})();
 </script>
 </body>
 </html>

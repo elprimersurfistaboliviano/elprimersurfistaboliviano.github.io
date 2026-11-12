@@ -30,6 +30,10 @@ label{display:flex;flex-direction:column;gap:.4rem;font-family:'Space Mono',mono
 #login{max-width:380px;margin:12vh auto;padding:0 1.2rem;display:flex;flex-direction:column;gap:1rem}
 #toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--rojo);padding:.8rem 1.5rem;font-family:'Space Mono',monospace;font-size:.7rem;display:none;z-index:9}
 [hidden]{display:none!important}
+textarea{background:var(--g2);border:1px solid rgba(255,255,255,.1);color:var(--blanco);padding:.8rem 1rem;font:inherit;font-size:.95rem;width:100%;resize:vertical}
+textarea:focus{outline:none;border-color:var(--rojo)}
+input[type=file]{padding:.5rem;font-size:.75rem}
+.pv{width:120px;aspect-ratio:1;object-fit:cover;margin-top:.4rem}
 </style>
 </head>
 <body>
@@ -45,6 +49,7 @@ label{display:flex;flex-direction:column;gap:.4rem;font-family:'Space Mono',mono
   <header><h1>Panel EPSB</h1><div><span class="m" id="who"></span> <button class="b" id="out">Salir</button></div></header>
   <main>
     <div class="tabs">
+      <button class="tab" data-t="textos">Textos</button><button class="tab" data-t="integrantes">Integrantes</button><button class="tab" data-t="productos">Merch</button>
       <button class="tab" data-t="colores">Colores</button><button class="tab" data-t="videos">Videos</button>
       <button class="tab" data-t="shows">Shows</button><button class="tab" data-t="pedidos">Pedidos</button>
     </div>
@@ -84,7 +89,7 @@ async function enter() {
     if (!a.length) { $('#lErr').textContent = 'Esta cuenta no tiene permisos de administrador.'; return logout(); }
   } catch (e) { return logout(); }
   $('#who').textContent = ses.user?.email || '';
-  $('#login').hidden = true; $('#app').hidden = false; go('colores');
+  $('#login').hidden = true; $('#app').hidden = false; go('textos');
 }
 $('#login').onsubmit = async e => {
   e.preventDefault(); $('#lErr').textContent = '';
@@ -95,8 +100,9 @@ $('#out').onclick = logout;
 document.querySelector('.tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) go(b.dataset.t); };
 function go(t) {
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  $('#view').onclick = $('#view').onchange = null;
   $('#view').innerHTML = '<p class="m">Cargando…</p>';
-  ({ colores, videos, shows, pedidos })[t]().catch(e => $('#view').innerHTML = `<p class="err">${esc(e.message)}</p>`);
+  ({ textos, integrantes, productos, colores, videos, shows, pedidos })[t]().catch(e => $('#view').innerHTML = `<p class="err">${esc(e.message)}</p>`);
 }
 const run = async (fn, ok, again) => { try { await fn(); toast(ok); go(again); } catch (e) { toast('Error: ' + e.message); } };
 
@@ -159,6 +165,71 @@ async function pedidos() {
       <select data-id="${p.id}">${['pendiente', 'pagado', 'cancelado'].map(e => `<option ${e === p.estado ? 'selected' : ''}>${e}</option>`).join('')}</select></div>`).join('') || '<p class="m">Todavía no hay pedidos.</p>'}`;
   $('#view').onchange = e => { const id = e.target.dataset.id; if (id) run(() => api('pedidos?id=eq.' + id, { method: 'PATCH', ...MIN, body: JSON.stringify({ estado: e.target.value }) }), 'Pedido actualizado', 'pedidos'); };
 }
+
+/* ── FOTOS ── */
+function resize(file, max = 1400) {
+  return new Promise((ok, no) => {
+    const im = new Image();
+    im.onload = () => { const r = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = im.width * r; c.height = im.height * r; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); c.toBlob(b => b ? ok(b) : no(new Error('Imagen no válida')), 'image/jpeg', .85); };
+    im.onerror = () => no(new Error('Imagen no válida')); im.src = URL.createObjectURL(file);
+  });
+}
+async function subir(file) {
+  await api('admins?select=user_id');   // renueva la sesión si venció
+  const blob = await resize(file), name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const r = await fetch(`${U}/storage/v1/object/fotos/${name}`, { method: 'POST', headers: { apikey: K, Authorization: 'Bearer ' + ses.access_token, 'Content-Type': 'image/jpeg' }, body: blob });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'No se pudo subir');
+  return `${U}/storage/v1/object/public/fotos/${name}`;
+}
+const fotoF = (k, u) => `<label>Foto<input type="file" class="up" accept="image/*"><input type="hidden" name="${k}" value="${esc(u)}"><img class="pv" src="${esc(u)}" ${u ? '' : 'hidden'} alt=""></label>`;
+function bindUp() {
+  document.querySelectorAll('.up').forEach(i => i.onchange = async () => {
+    const f = i.files[0]; if (!f) return;
+    const lb = i.parentElement, h = lb.querySelector('input[type=hidden]'), im = lb.querySelector('.pv');
+    try { toast('Subiendo foto…'); h.value = await subir(f); im.src = h.value; im.hidden = false; toast('Foto lista. Recuerda guardar.'); }
+    catch (e) { toast('Error: ' + e.message); }
+  });
+}
+
+/* ── TEXTOS ── */
+async function textos() {
+  const x = { hero_eyebrow: '', hero_subtitulo: '', historia: '', foto_historia: '', ...((await api('ajustes?clave=eq.textos&select=valor'))[0]?.valor || {}) };
+  $('#view').innerHTML = `<h2>Textos</h2><form class="row" id="tf">
+    <label style="flex-basis:100%">Línea sobre el título (inicio)<input name="hero_eyebrow" value="${esc(x.hero_eyebrow)}"></label>
+    <label style="flex-basis:100%">Frase del inicio<input name="hero_subtitulo" value="${esc(x.hero_subtitulo)}"></label>
+    <label style="flex-basis:100%">Nuestra historia (separa los párrafos con una línea en blanco)<textarea name="historia" rows="10">${esc(x.historia)}</textarea></label>
+    ${fotoF('foto_historia', x.foto_historia)}<button class="b p">Guardar</button></form>`;
+  bindUp();
+  $('#tf').onsubmit = e => { e.preventDefault(); run(() => api('ajustes', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ clave: 'textos', valor: Object.fromEntries(new FormData(e.target)) }) }), 'Textos guardados', 'textos'); };
+}
+
+/* ── LISTAS CON FOTO (integrantes y merch) ── */
+async function crud(tab, titulo, F, orden, sub) {
+  const l = await api(`${tab}?select=*&order=${orden}`);
+  const field = f => f.t === 'foto' ? fotoF(f.k, '') : f.t === 'area' ? `<label style="flex-basis:100%">${f.l}<textarea name="${f.k}" rows="3"></textarea></label>` : `<label>${f.l}<input name="${f.k}" ${f.t === 'num' ? 'type="number" value="0"' : ''} ${f.k === 'nombre' ? 'required' : ''}></label>`;
+  $('#view').innerHTML = `<h2>${titulo}</h2><form class="row" id="cf"><input type="hidden" name="id">${F.map(field).join('')}<button class="b p" id="cb">Agregar</button></form>` +
+    (l.map(r => `<div class="it">${r.foto_url ? `<img src="${esc(r.foto_url)}" alt="">` : ''}<span class="s">${esc(r.nombre)}<small>${esc(sub(r))}${r.activo === false ? ' · OCULTO' : ''}</small></span>
+      <button class="b" data-ed="${r.id}">Editar</button>${'activo' in r ? `<button class="b" data-tg="${r.id}">${r.activo ? 'Ocultar' : 'Mostrar'}</button>` : ''}<button class="b d" data-rm="${r.id}">Borrar</button></div>`).join('') || '<p class="m">Nada todavía.</p>');
+  bindUp();
+  const fm = $('#cf');
+  fm.onsubmit = e => {
+    e.preventDefault(); const b = {}; F.forEach(f => { const v = fm.elements[f.k].value; b[f.k] = f.t === 'num' ? +v : v; });
+    const id = fm.elements.id.value;
+    run(() => api(id ? `${tab}?id=eq.${id}` : tab, { method: id ? 'PATCH' : 'POST', ...MIN, body: JSON.stringify(b) }), 'Guardado', tab);
+  };
+  $('#view').onclick = e => {
+    const g = a => e.target.closest(`[data-${a}]`)?.dataset[a], ed = g('ed'), tg = g('tg'), rm = g('rm'), f = x => l.find(r => r.id == x);
+    if (ed) {
+      const r = f(ed); fm.elements.id.value = r.id;
+      F.forEach(q => { const el = fm.elements[q.k]; el.value = r[q.k] ?? ''; if (q.t === 'foto') { const im = el.parentElement.querySelector('.pv'); im.src = r[q.k] || ''; im.hidden = !r[q.k]; } });
+      $('#cb').textContent = 'Guardar cambios'; scrollTo(0, 0);
+    }
+    if (tg) run(() => api(`${tab}?id=eq.${tg}`, { method: 'PATCH', ...MIN, body: JSON.stringify({ activo: !f(tg).activo }) }), 'Listo', tab);
+    if (rm && confirm('¿Borrar?')) run(() => api(`${tab}?id=eq.${rm}`, { method: 'DELETE', ...MIN }), 'Borrado', tab);
+  };
+}
+const integrantes = () => crud('integrantes', 'Integrantes', [{ k: 'nombre', l: 'Nombre' }, { k: 'rol', l: 'Rol' }, { k: 'orden', l: 'Orden', t: 'num' }, { k: 'bio', l: 'Bio', t: 'area' }, { k: 'foto_url', t: 'foto' }], 'orden,id', r => r.rol);
+const productos = () => crud('productos', 'Merch', [{ k: 'nombre', l: 'Nombre' }, { k: 'precio', l: 'Precio (ej. Bs. 100)' }, { k: 'orden', l: 'Orden', t: 'num' }, { k: 'descripcion', l: 'Descripción', t: 'area' }, { k: 'foto_url', t: 'foto' }], 'orden,id', r => r.precio);
 
 if (ses) enter();
 </script>
