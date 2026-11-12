@@ -1068,8 +1068,8 @@
 <script>
 /* ═══ CONFIGURACIÓN ═══ */
 const CONFIG = {
-  SUPABASE_URL: '',   // ej: https://abcd1234.supabase.co  (vacío = modo sin base de datos)
-  SUPABASE_KEY: '',   // la clave "anon public" de Supabase
+  SUPABASE_URL: 'https://ptlapsdtmslxfabqtxhe.supabase.co',   // ej: https://abcd1234.supabase.co  (vacío = modo sin base de datos)
+  SUPABASE_KEY: 'sb_publishable_N5WK2cb1iJ31WRdcXj1JbA_G_2crrBe',   // la clave "anon public" de Supabase
   WHATSAPP: '59170088343',
   QR_PAGO: 'images/qr-pago.png'
 };
@@ -1091,7 +1091,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const HAS_DB = !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY);
 async function sb(path, opt = {}) {
-  const r = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/' + path, { ...opt, headers: { apikey: CONFIG.SUPABASE_KEY, Authorization: 'Bearer ' + CONFIG.SUPABASE_KEY, 'Content-Type': 'application/json' } });
+  const r = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/' + path, { ...opt, headers: { apikey: CONFIG.SUPABASE_KEY, ...(CONFIG.SUPABASE_KEY.startsWith('sb_') ? {} : { Authorization: 'Bearer ' + CONFIG.SUPABASE_KEY }), 'Content-Type': 'application/json' } });
   const j = await r.json();
   if (!r.ok) throw new Error(j.message || 'Error de conexión');
   return j;
